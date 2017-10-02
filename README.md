@@ -1,5 +1,5 @@
-# ESP8266TempLogger
-Designed and tested on a Lolin NodeMCU V3
+# ESP8266 Temperature Logger
+Designed and tested on a Lolin NodeMCU V3. Sends temperature over UDP from a DS18B20 connected to an ESP8266 microcontroller.
 
 # Data Format
 Temperature is sent in a single UDP packet with a payload of 12 bytes to a configurable host and port. 
