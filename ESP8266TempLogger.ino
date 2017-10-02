@@ -6,122 +6,93 @@
 #include <DallasTemperature.h>
 #include <EEPROM.h>
 
+#define ONE_WIRE_BUS 5 // Data wire is plugged into pin D1 (NodeMCU) on the ESP8266 12-E - GPIO 5
+#define TRIGGER_PIN 4 // Reset button on D2 / GPIO 4
+
 char* computer_ip;
 int computer_port;
 byte mac[6];
-
-// Data wire is plugged into pin D1 on the ESP8266 12-E - GPIO 5
-#define ONE_WIRE_BUS 5
-// Reset button on D2 / GPIO 4
-#define TRIGGER_PIN 4
-// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
-OneWire oneWire(ONE_WIRE_BUS);
-
-// Pass our oneWire reference to Dallas Temperature. 
-DallasTemperature DS18B20(&oneWire);
-
-//float tempF;
-float tempC;
-//char temperatureCString[6];
-//boolean wifiConnected = false; // from an older version
-WiFiUDP UDP;
+OneWire oneWire(ONE_WIRE_BUS); // Start a OneWire Bus
+DallasTemperature DS18B20(&oneWire); // Pass our oneWire reference to Dallas Temperature. 
+float tempC; //we should be able to pass this around as a reference rather than using a global. 
+WiFiUDP UDP; //UDP Socket Instance
 
 void getTemperature();
 
 void setup() {
-
   WiFi.macAddress(mac);  // get mac address for use as a serial number
   pinMode(TRIGGER_PIN, INPUT);
-//  Serial.begin(74880);
-//  Serial.print("\n");
-//  Serial.println("Starting wifi config");
+//  Serial.begin(74880); //enable serial output for debugging. Using this bitrate allows the bootloader messages to be readable
+
   WiFiManager wifiManager;
-  WiFiManagerParameter server_ip("server", "server", "server", 40);
+  WiFiManagerParameter server_ip("server", "server", "server", 40); 
   WiFiManagerParameter server_port("port", "port", "30", 40);
   wifiManager.addParameter(&server_ip);
   wifiManager.addParameter(&server_port);
 
-  if ( digitalRead(TRIGGER_PIN) == HIGH ) {
-//    Serial.println("Reset Trigger detected, entering config mode");
+  if ( digitalRead(TRIGGER_PIN) == HIGH ) { //enter config mode if the reset button is pushed
       wifiManager.startConfigPortal("ESP8266");
-//      Serial.println("connected...yeey :)");
     }
   else{  
     wifiManager.autoConnect("ESP8266"); //connect to saved wifi network, if connection fails enter config mode. This should probably be changed to sleep if connection fails.
   }
   computer_ip = (char*)server_ip.getValue();
   computer_port = atoi(server_port.getValue());
-//  computer_ip = "10.9.9.240";
+//  computer_ip = "10.9.9.240"; //hardcode values for testing
 //  computer_port = 8030;
-  int i;
+  int i; 
   byte* p = (byte*) &computer_port;
   EEPROM.begin(256); //write up to 256 bytes (half of the eeprom)
   if (strcmp(computer_ip,"server") && strlen(computer_ip) < 251){ //write our new values to the eeprom, if they're not too long. We need 5 bytes for the null termination and 4 byte integer
-//    Serial.println("Writing New Data to EEPROM");
     for (i = 0; i < ((strlen(computer_ip)+1)); i++){ //write hostname byte at a time
       EEPROM.write(i,computer_ip[i]);
-//      Serial.println("Writing byte containing");
-//      Serial.println(computer_ip[i]);
     }
-    for (int j = 0;j<=3;j++){ //write port number byte at a time
+    for (int j = 0;j<=3;j++){ //write port number byte at a time, continue from the end of the previous string
     EEPROM.write((i+j), *(p+j));
-//      Serial.print("Writing byte containing:");
-//      Serial.println(*(p+j));
     }  
-    EEPROM.commit();
+    EEPROM.commit(); //write our data from memory to EEPROM. It will stay in RAM, but its no big deal. We don't use much RAM anyway.
   }
   else{
-//    Serial.println("Reading data from EEPROM");
     char currentchar;
     i=0;
     while(currentchar != NULL) //read target host byte at a time, end when we encounter null termination
     {
-      currentchar = EEPROM.read(i);
-  //    Serial.println("Reading byte containing");
-  //    Serial.println(currentchar);   
+      currentchar = EEPROM.read(i); 
       computer_ip[i] = currentchar;
       i++;
     }
     for (int j=0;j<=3;j++){  //read port number byte at a time
-    *(p+j)        = EEPROM.read(i+j);
-    //Serial.print("Reading byte containing");
-    //Serial.println(*(p+j));
+      *(p+j)  = EEPROM.read(i+j);
     }     
-
   }
-//  Serial.print("Target Host:");
-//  Serial.println(computer_ip);
-//  Serial.print("Target Port:");
-//  Serial.println(computer_port);
-  delay(10);
-  DS18B20.begin();
+  delay(10); //not sure why we're delaying here. Need to test removing this.
+  DS18B20.begin(); //start the sensor 
   pinMode(D0,WAKEUP_PULLUP);//D0 / GPIO16 is connected to reset for deep sleep wakeup call.
 }
 
 void loop() {
   getTemperature();
-  UDP.beginPacket(computer_ip,computer_port);
+  UDP.beginPacket(computer_ip,computer_port);//start a new UDP packet
   for(int i = 0;i <= 5 ;i++){ //write the mac address byte at a time
     UDP.write(mac[i]);
   }
   uint16_t s = 0;
   byte *p = (byte*)&s;
-  UDP.write(p[0]); //write sensor ID. Hardcoded to 0000 for now
+  UDP.write(p[0]); //write sensor ID. Hardcoded to 0000 for now. Needs to be written byte at a time.
   UDP.write(p[1]);
   p = (byte*) &tempC; //write the temperature value byte at a time
   for (int i = 3;i >= 0;i--){
     UDP.write(p[i]);
   }
   UDP.endPacket();//send the packet
-  delay(100); //delay long enough to send the packet before going to sleep
+  delay(100); //delay long enough to send the packet before going to sleep. Test reducing this value, we may be able to reduce power consumption
   ESP.deepSleep(60e6); //go to sleep for a minute
 }
 
 void getTemperature() {
   do {
-//    Serial.println("Requesting Temp");
     DS18B20.requestTemperatures(); 
     tempC = DS18B20.getTempCByIndex(0);
-    delay(100);
+    delay(100); //test reducing this value, we may be able to reduce power consumption
   } while (tempC == 85.0 || tempC == (-127.0));
 }
