@@ -22,10 +22,10 @@ Executing the script will listen on port 8030 for data from any sensor. When a p
 Another example server is located at https://github.com/andrewmacheret/temperature-sensor-server
 
 # Build Dependencies 
-WiFi Manager: https://github.com/tzapu/WiFiManager
-OneWire: https://www.pjrc.com/teensy/td_libs_OneWire.html
-ESP8266 Libraries from: https://github.com/esp8266/Arduino
-Maxim/Dallas Temperature Library: https://github.com/milesburton/Arduino-Temperature-Control-Library
+ * WiFi Manager: https://github.com/tzapu/WiFiManager
+ * OneWire: https://www.pjrc.com/teensy/td_libs_OneWire.html
+ * ESP8266 Libraries from: https://github.com/esp8266/Arduino
+ * Maxim/Dallas Temperature Library: https://github.com/milesburton/Arduino-Temperature-Control-Library
 
 # Parts Required
  * ESP8266 (ESP12E or ESP12F should work)
