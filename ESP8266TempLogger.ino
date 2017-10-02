@@ -114,7 +114,7 @@ void loop() {
   }
   UDP.endPacket();//send the packet
   delay(100); //delay long enough to send the packet before going to sleep
-  //ESP.deepSleep(5e6); //go to sleep
+  ESP.deepSleep(60e6); //go to sleep for a minute
 }
 
 void getTemperature() {
