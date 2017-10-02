@@ -1,2 +1,2 @@
 # ESP8266TempLogger
-(Wiring.png)
+!(Wiring.png)
