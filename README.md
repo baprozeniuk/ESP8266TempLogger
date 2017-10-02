@@ -1,5 +1,5 @@
-# ESP8266TempLogger
-Designed and tested on a Lolin NodeMCU V3
+# ESP8266 Temperature Logger
+Designed and tested on a Lolin NodeMCU V3. Sends temperature over UDP from a DS18B20 connected to an ESP8266 microcontroller.
 
 # Data Format
 Temperature is sent in a single UDP packet with a payload of 12 bytes to a configurable host and port. 
@@ -21,7 +21,13 @@ Executing the script will listen on port 8030 for data from any sensor. When a p
 
 Another example server is located at https://github.com/andrewmacheret/temperature-sensor-server
 
-# Parts Required:
+# Build Dependencies 
+ * WiFi Manager: https://github.com/tzapu/WiFiManager
+ * OneWire: https://www.pjrc.com/teensy/td_libs_OneWire.html
+ * ESP8266 Libraries from: https://github.com/esp8266/Arduino
+ * Maxim/Dallas Temperature Library: https://github.com/milesburton/Arduino-Temperature-Control-Library
+
+# Parts Required
  * ESP8266 (ESP12E or ESP12F should work)
  * DS18B20 1-Wire temperature Sensor
  * 2x 4.7kΩ resistors
