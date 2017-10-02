@@ -36,7 +36,6 @@ void setup() {
 //  Serial.print("\n");
 //  Serial.println("Starting wifi config");
   WiFiManager wifiManager;
-  
   WiFiManagerParameter server_ip("server", "server", "server", 40);
   WiFiManagerParameter server_port("port", "port", "30", 40);
   wifiManager.addParameter(&server_ip);
@@ -105,14 +104,17 @@ void loop() {
   for(int i = 0;i <= 5 ;i++){ //write the mac address byte at a time
     UDP.write(mac[i]);
   }
-  UDP.write(0x01); //sensor ID number  
-  byte *p = (byte*) &tempC; //write the temperature value byte at a time
+  uint16_t s = 0;
+  byte *p = (byte*)&s;
+  UDP.write(p[0]); //write sensor ID. Hardcoded to 0000 for now
+  UDP.write(p[1]);
+  p = (byte*) &tempC; //write the temperature value byte at a time
   for (int i = 3;i >= 0;i--){
     UDP.write(p[i]);
   }
   UDP.endPacket();//send the packet
   delay(100); //delay long enough to send the packet before going to sleep
-  ESP.deepSleep(5e6); //go to sleep
+  //ESP.deepSleep(5e6); //go to sleep
 }
 
 void getTemperature() {
