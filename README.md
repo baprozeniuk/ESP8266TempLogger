@@ -14,6 +14,13 @@ The configuration mode is triggered either by closing the reset circuit, or if a
 
 Once in configuration mode, a WiFi network named "ESP8266" will be created. This network will direct you to a captive portal at 192.168.4.1. Enter your WiFi network configuration, server name and port. Make sure that the reset circuit is open before saving otherwise it will re-enter configuration mode upon reboot. 
 
+# Consuming Data
+An example Python script is included. 
+
+Executing the script will listen on port 8030 for data from any sensor. When a packet is recieved it is decoded and output to the terminal as well as to a file named temperature.log. 
+
+Another example server is located at https://github.com/andrewmacheret/temperature-sensor-server
+
 # Parts Required:
  * ESP8266 (ESP12E or ESP12F should work)
  * DS18B20 1-Wire temperature Sensor
