@@ -16,13 +16,16 @@ OneWire oneWire(ONE_WIRE_BUS); // Start a OneWire Bus
 DallasTemperature DS18B20(&oneWire); // Pass our oneWire reference to Dallas Temperature. 
 float tempC; //we should be able to pass this around as a reference rather than using a global. 
 WiFiUDP UDP; //UDP Socket Instance
+unsigned long _connectTimeout = 30000; //time out for wifi connection 1000 * seconds
+uint32_t sleeptime = 5e6; //how long to sleep for in mirosecods (seconds e6)
 
 void getTemperature();
 
 void setup() {
   WiFi.macAddress(mac);  // get mac address for use as a serial number
+  pinMode(D0,WAKEUP_PULLUP);//D0 / GPIO16 is connected to reset for deep sleep wakeup call.
   pinMode(TRIGGER_PIN, INPUT);
-//  Serial.begin(74880); //enable serial output for debugging. Using this bitrate allows the bootloader messages to be readable
+  //Serial.begin(74880); //enable serial output for debugging. Using this bitrate allows the bootloader messages to be readable
 
   WiFiManager wifiManager;
   WiFiManagerParameter server_ip("server", "server", "server", 40); 
@@ -34,7 +37,22 @@ void setup() {
       wifiManager.startConfigPortal("ESP8266");
     }
   else{  
-    wifiManager.autoConnect("ESP8266"); //connect to saved wifi network, if connection fails enter config mode. This should probably be changed to sleep if connection fails.
+//    wifiManager.autoConnect("ESP8266"); //connect to saved wifi network, if connection fails enter config mode. This should probably be changed to sleep if connection fails.
+      WiFi.mode(WIFI_STA);
+      if (WiFi.SSID()) {
+      ETS_UART_INTR_DISABLE(); //Pulled these 3 lines from WiFManager library: trying to fix connection in progress hanging
+      wifi_station_disconnect();
+      ETS_UART_INTR_ENABLE();
+
+      WiFi.begin();
+      int connRes = waitForConnectResult();
+      if(connRes != WL_CONNECTED){
+        ESP.deepSleep(sleeptime);
+      }
+     }
+     else {
+       wifiManager.startConfigPortal("ESP8266"); //no saved settings found, reverting to config mode
+      }
   }
   computer_ip = (char*)server_ip.getValue();
   computer_port = atoi(server_port.getValue());
@@ -67,7 +85,6 @@ void setup() {
   }
   delay(10); //not sure why we're delaying here. Need to test removing this.
   DS18B20.begin(); //start the sensor 
-  pinMode(D0,WAKEUP_PULLUP);//D0 / GPIO16 is connected to reset for deep sleep wakeup call.
 }
 
 void loop() {
@@ -86,13 +103,41 @@ void loop() {
   }
   UDP.endPacket();//send the packet
   delay(100); //delay long enough to send the packet before going to sleep. Test reducing this value, we may be able to reduce power consumption
-  ESP.deepSleep(60e6); //go to sleep for a minute
+  ESP.deepSleep(sleeptime); //go to sleep for a minute *set to 5s for testing change to 60e6 for 1 minute*
 }
 
 void getTemperature() {
+  int i=0;
   do {
     DS18B20.requestTemperatures(); 
     tempC = DS18B20.getTempCByIndex(0);
     delay(100); //test reducing this value, we may be able to reduce power consumption
+    if (i > 100){
+      break;
+    }
+    i++;
   } while (tempC == 85.0 || tempC == (-127.0));
+}
+
+
+
+uint8_t waitForConnectResult() { //waits for wifi connection result. Pulled from WifiManager library.
+  if (_connectTimeout == 0) {
+    return WiFi.waitForConnectResult();
+  } else {
+    unsigned long start = millis();
+    boolean keepConnecting = true;
+    uint8_t status;
+    while (keepConnecting) {
+      status = WiFi.status();
+      if (millis() > start + _connectTimeout) {
+        keepConnecting = false;
+      }
+      if (status == WL_CONNECTED || status == WL_CONNECT_FAILED) {
+        keepConnecting = false;
+      }
+      delay(100);
+    }
+    return status;
+  }
 }
