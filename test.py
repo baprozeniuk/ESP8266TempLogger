@@ -12,44 +12,47 @@ import smtplib
 
 import psycopg2
 
-#email settings
-email = False
-TLS = True #enable for starttls
-fromaddr = 'me@gmail.com'
-toaddr = 'you@gmail.com'
-euser = 'me@gmail.com'
-epassword = 'password'#user and password only required if TLS == True
-smtp_server = 'smtp.gmail.com'
-smtp_port = 587
 
-#SMS settings
-SMS = False #enable or disable SMS notification
-PhoneNumber = "+12018675309"
-
-
-
-#logging settings
-logfile = "temperature.log"
-errorlog = "error.log"
-
-#alerting ranges 'sensor MAC': (minC,maxC)
-ranges = {'2c3ae80ac099': (25,43), 
-          '6001944f0482': (20,25)}
-
-
-#where to listen for packets
-UDP_IP = "0.0.0.0"
-UDP_PORT = 30
-
-sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-sock.bind((UDP_IP, UDP_PORT))
-#database settings:
-database = True
-dbname = "esplogger"
-dbhost = "host"
-dbuser = "esplogger"
-dbpass = "password"
 def main():
+
+   #email settings
+   email = False
+   TLS = True #enable for starttls
+   fromaddr = 'me@gmail.com'
+   toaddr = 'you@gmail.com'
+   euser = 'me@gmail.com'
+   epassword = 'password'#user and password only required if TLS == True
+   smtp_server = 'smtp.gmail.com'
+   smtp_port = 587
+
+   #SMS settings
+   SMS = False #enable or disable SMS notification
+   PhoneNumber = "+12018675309"
+
+
+
+   #logging settings
+   logfile = "temperature.log"
+   errorlog = "error.log"
+
+   #alerting ranges 'sensor MAC': (minC,maxC)
+   ranges = {'2c3ae80ac099': (25,43), 
+             '6001944f0482': (20,25)}
+
+
+   #where to listen for packets
+   UDP_IP = "0.0.0.0"
+   UDP_PORT = 30
+
+   sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+   sock.bind((UDP_IP, UDP_PORT))
+   #database settings:
+   database = True
+   dbname = "esplogger"
+   dbhost = "localhost"
+   dbuser = "esplogger"
+   dbpass = "password"
+
    if SMS == True:
       SNS = boto3.client(
           "sns",
