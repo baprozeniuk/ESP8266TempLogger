@@ -1,6 +1,6 @@
 #include <DNSServer.h>
-#include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 #include <WiFiManager.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -8,6 +8,8 @@
 
 #define ONE_WIRE_BUS 5 // Data wire is plugged into pin D1 (NodeMCU) on the ESP8266 12-E - GPIO 5
 #define TRIGGER_PIN 4 // Reset button on D2 / GPIO 4
+//#define POWER_PIN 13 // nodeMCU pin D7 / GPIO13 - for powering the DS18B20
+#define WAKEUP_PIN 16
 
 char* computer_ip;
 int computer_port;
@@ -17,15 +19,19 @@ DallasTemperature DS18B20(&oneWire); // Pass our oneWire reference to Dallas Tem
 float tempC; //we should be able to pass this around as a reference rather than using a global. 
 WiFiUDP UDP; //UDP Socket Instance
 unsigned long _connectTimeout = 30000; //time out for wifi connection 1000 * seconds
-uint32_t sleeptime = 5e6; //how long to sleep for in mirosecods (seconds e6)
+uint32_t sleeptime = 120e6; //how long to sleep for in mirosecods (seconds e6)
 
 void getTemperature();
 
 void setup() {
   WiFi.macAddress(mac);  // get mac address for use as a serial number
-  pinMode(D0,WAKEUP_PULLUP);//D0 / GPIO16 is connected to reset for deep sleep wakeup call.
+  pinMode(WAKEUP_PIN,WAKEUP_PULLUP);//D0 / GPIO16 is connected to reset for deep sleep wakeup call.
   pinMode(TRIGGER_PIN, INPUT);
-  //Serial.begin(74880); //enable serial output for debugging. Using this bitrate allows the bootloader messages to be readable
+  Serial.begin(115200); //enable serial output for debugging. Using this bitrate allows the bootloader messages to be readable
+
+
+ // pinMode(POWER_PIN, OUTPUT); //set the power pin as output
+ // digitalWrite(POWER_PIN, HIGH); // turn on the power pin
 
   WiFiManager wifiManager;
   WiFiManagerParameter server_ip("server", "server", "server", 40); 
@@ -34,6 +40,7 @@ void setup() {
   wifiManager.addParameter(&server_port);
 
   if ( digitalRead(TRIGGER_PIN) == HIGH ) { //enter config mode if the reset button is pushed
+      Serial.println("config overried entered");
       wifiManager.startConfigPortal("ESP8266");
     }
   else{  
@@ -51,6 +58,7 @@ void setup() {
       }
      }
      else {
+       Serial.println("No Saved Settings detected. Entering Config Mode");
        wifiManager.startConfigPortal("ESP8266"); //no saved settings found, reverting to config mode
       }
   }
@@ -62,6 +70,7 @@ void setup() {
   byte* p = (byte*) &computer_port;
   EEPROM.begin(256); //write up to 256 bytes (half of the eeprom)
   if (strcmp(computer_ip,"server") && strlen(computer_ip) < 251){ //write our new values to the eeprom, if they're not too long. We need 5 bytes for the null termination and 4 byte integer
+    Serial.println("Writing Settings to EEPROM");
     for (i = 0; i < ((strlen(computer_ip)+1)); i++){ //write hostname byte at a time
       EEPROM.write(i,computer_ip[i]);
     }
@@ -71,6 +80,7 @@ void setup() {
     EEPROM.commit(); //write our data from memory to EEPROM. It will stay in RAM, but its no big deal. We don't use much RAM anyway.
   }
   else{
+    Serial.println("Reading Settings from EEPROM");
     char currentchar;
     i=0;
     while(currentchar != NULL) //read target host byte at a time, end when we encounter null termination
@@ -102,6 +112,7 @@ void loop() {
     UDP.write(p[i]);
   }
   UDP.endPacket();//send the packet
+ // digitalWrite(POWER_PIN, LOW);
   delay(100); //delay long enough to send the packet before going to sleep. Test reducing this value, we may be able to reduce power consumption
   ESP.deepSleep(sleeptime); //go to sleep for a minute *set to 5s for testing change to 60e6 for 1 minute*
 }
