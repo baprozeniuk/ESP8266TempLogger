@@ -1,14 +1,14 @@
-import socket
-import sys
-import traceback
-import time
-import binascii
-import struct
+import socket #for listening for packets
+import sys #general use
+import traceback #for debug traces
+import time #for file and screen logging
+import binascii #for packet decoding
+import struct #for packet decoding
 import boto3 #for Amazon SNS
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
-import smtplib
-import psycopg2
+from email.MIMEMultipart import MIMEMultipart #for email
+from email.MIMEText import MIMEText #for email
+import smtplib #for email
+import psycopg2 #for postgres
 
 #global logging settings
 logfile = "temperature.log"
@@ -184,7 +184,6 @@ def main():
          file = open(errorlog,"a")
          file.write(err)
          file.close()
-   
-   
+     
 if __name__ == '__main__':
    sys.exit(main())  
