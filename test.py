@@ -4,12 +4,10 @@ import traceback
 import time
 import binascii
 import struct
-#import requests
 import boto3 #for Amazon SNS
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 import smtplib
-
 import psycopg2
 
 
