@@ -17,7 +17,7 @@ Once in configuration mode, a WiFi network named "ESP8266" will be created. This
 # Consuming Data
 An example Python script is included. 
 
-Executing the script will listen on port 8030 for data from any sensor. When a packet is recieved it is decoded and output to the terminal as well as to a file named temperature.log. 
+The script includes alerting via email and amazon SNS, logging to console, database and csv file.
 
 Another example server is located at https://github.com/andrewmacheret/temperature-sensor-server
 
@@ -28,10 +28,11 @@ Another example server is located at https://github.com/andrewmacheret/temperatu
  * Maxim/Dallas Temperature Library: https://github.com/milesburton/Arduino-Temperature-Control-Library
 
 # Parts Required
- * ESP8266 (ESP12E or ESP12F should work)
+ * ESP8266 (ESP12E or ESP12F should work). WEMOS boards also work.
  * DS18B20 1-Wire temperature Sensor
  * 2x 4.7kΩ resistors
  * 1 switch of some type. Needs to be able to be closed for 1 durration of the program
+ * 3.3V power supply, or use the voltage regulator configuration described in the wiring diagram and cad files
  
  # Wiring Diagram
 ![schematic](/Wiring.png "Wiring Diagram")
