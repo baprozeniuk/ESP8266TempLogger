@@ -1,0 +1,41 @@
+{           
+   "email_config": {
+            "enable": false,
+            "fromaddr": "me@gmail.com", 
+            "toaddr": "me@gmail@gmail.com", 
+            "user": "me@gmail@gmail.com", 
+            "password": "password", 
+            "smtp_server": "smtp.gmail.com", 
+            "smtp_port": 587,             
+            "tls": true
+   },
+   "sns_config": {  
+            "enable": false,
+            "phonenumber": "+15555551234", 
+            "aws_key_id": "AAA", 
+            "aws_secret_key": "BBBBBBBBB",             
+            "aws_topic": "Notifications"
+   },
+   "db_config": {
+            "enable": true,
+            "dbname": "esplogger", 
+            "dbhost": "ip_or_hostname", 
+            "dbuser": "esplogger",             
+            "dbpass": "dbpassword"
+   },
+   "file_config": {
+            "enable": true,
+            "logfile": "temperature.log",           
+            "errorfile": "error.log"
+   },
+   "server_config": {
+            "ip": "0.0.0.0",           
+            "port": 30
+   },   
+   "sensor_ranges":{
+            "2c3ae80ac099": {"high":15, "low":10},
+            "6001944f0482": {"high":15, "low":10}
+   }
+}
+            
+       

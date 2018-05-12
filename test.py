@@ -9,11 +9,9 @@ from email.MIMEMultipart import MIMEMultipart #for email
 from email.MIMEText import MIMEText #for email
 import smtplib #for email
 import psycopg2 #for postgres
+import json
 
-#global logging settings
-logfile = "temperature.log"
-errorlog = "error.log"
-
+errorlog = ""       
 
 def sendEmail(toaddr,fromaddr,server,port,subject,body,TLS,username,password):
    try:
@@ -92,39 +90,48 @@ def logToDB(dbname,dbuser,dbhost,dbpass,mac,id,value):
             
             
 def main():
-   #email settings
-   email = False
-   TLS = True #enable for starttls
-   fromaddr = 'me@gmail.com'
-   toaddr = 'me@gmail.com'
-   euser = 'me@gmail.com'
-   epassword = ''#user and password only required if TLS == True
-   smtp_server = 'smtp.gmail.com'
-   smtp_port = 587
+   
+   with open('config.json', 'r') as f:
+      config = json.load(f)
+   #all config loads from a json file. Override only for debugging
+   #file logging settings
+   logfile = config['file_config']['logfile']
+   global errorlog
+   errorlog = config['file_config']['errorfile']
+   
+   #email settings 
+   email = config['email_config']['enable']
+   TLS = config['email_config']['tls'] 
+   fromaddr = config['email_config']['fromaddr']
+   toaddr = config['email_config']['toaddr']
+   euser = config['email_config']['user']
+   epassword = config['email_config']['password']
+   smtp_server = config['email_config']['smtp_server']
+   smtp_port = config['email_config']['smtp_port']
 
    #SMS settings
-   SMS = False #enable or disable SMS notification
-   phoneNumber = "+12018675309"
-   aws_key_id = ""
-   aws_secret_key = ""
-   aws_topic = "notifications"
+   SMS = config['sns_config']['enable'] #enable or disable SMS notification
+   phoneNumber = config['sns_config']['phonenumber']
+   aws_key_id = config['sns_config']['aws_key_id']
+   aws_secret_key = config['sns_config']['aws_secret_key']
+   aws_topic = config['sns_config']['aws_topic']
    
    #alerting ranges 'sensor MAC': (minC,maxC)
    ranges = {'2c3ae80ac099': (25,43), 
              '6001944f0482': (20,25)}
 
    #where to listen for packets
-   UDP_IP = "0.0.0.0"
-   UDP_PORT = 30
+   UDP_IP = config['server_config']['ip']
+   UDP_PORT = config['server_config']['port']
 
    sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
    sock.bind((UDP_IP, UDP_PORT))
    #database settings:
-   database = True
-   dbname = "esplogger"
-   dbhost = "127.0.0.1"
-   dbuser = "esplogger"
-   dbpass = ""
+   database = config['db_config']['enable']
+   dbname = config['db_config']['dbname']
+   dbhost = config['db_config']['dbhost']
+   dbuser = config['db_config']['dbuser']
+   dbpass = config['db_config']['dbpass']
    #setup objects for sending SMS via Amazon SNS
    if SMS == True:
       SNS = boto3.client(
@@ -137,7 +144,7 @@ def main():
       topic = SNS.create_topic(Name=aws_topic)
       topic_arn = topic['TopicArn']  # get its Amazon Resource Name
 
-   while True:
+   while True: #main loop
       #wait for data
       data, addr = sock.recvfrom(1024)
       #decode packet
@@ -169,7 +176,7 @@ def main():
       if database == True:
          logToDB(dbname,dbuser,dbhost,dbpass,serial_str,id,value_float)      
       try:
-         if (value_float > ranges[serial_str][1]) or (value_float < ranges[serial_str][0]): #if the current value is out of the acceptable range, alert
+         if (value_float > config['sensor_ranges'][serial_str]['high']) or (value_float < config['sensor_ranges'][serial_str]['low']): #if the current value is out of the acceptable range, alert
             print "Alert! Temperature out of range!"
             if email == True:
                subject = "Sensor Alert"
