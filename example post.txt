@@ -1,0 +1,1 @@
+curl -i -H "Content-Type: application/json"  -H "Accept: application/json" -X POST  -d '{"mac":"2c3ae80ac099", "id":"0000", "name": "attic"}' http://10.9.9.240:5002/FriendlyName

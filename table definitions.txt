@@ -1,0 +1,13 @@
+create table esp_names_to_mac (
+mac macaddr unique not null primary key,
+id bytea not null,
+name varchar(255) not null
+);
+
+create table esp_log (
+sample_num serial primary key,
+sample_time timestamp not null default now(),
+sample_host macaddr not null,
+sample_id bytea not null,
+sample_value real not null
+);
